@@ -1,3 +1,4 @@
+import 'package:consumo_servico_avancado/Post.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -11,41 +12,171 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  String _urlBase = "https://jsonplaceholder.typicode.com";
+  
+  Future<List<Post>>_recuperarPostagens() async{
+    http.Response response = await http.get(_urlBase + "/posts");
+    var dadosJson = json.decode(response.body);
+    List<Post> postagens = [];
+    for(var post in dadosJson){
+      Post p = Post(post["userId"], post["id"],post["title"], post["body"]);
+      postagens.add(p);
+    }
 
-  Future<Map> _recuperarPreco() async{
-    String url = "https://blockchain.info/ticker";
-    http.Response response = await http.get(url);
-    return json.decode(response.body);
+    return postagens;
   }
+
+  _post() async{
+    Post post = Post(120, null, "Titulo", "Corpo da postagem");
+    var corpo = json.encode(
+        post.toJson()
+    );
+    http.Response response = await http.post(
+      _urlBase+ "/posts",
+      headers: {
+        "Content-type": "application/json; charset=UTF-8"
+      },
+      body: corpo
+    );
+
+    print("Resposta: ${response.statusCode}");
+    print("Resposta: ${response.body}");
+  }
+
+  _put() async{
+    Post post = Post(120, null, "Titulo", "Corpo da postagem");
+    var corpo = json.encode(
+        post.toJson()
+    );
+    http.Response response = await http.put(
+        _urlBase+ "/posts/2",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8"
+        },
+        body: corpo
+    );
+
+    print("Resposta: ${response.statusCode}");
+    print("Resposta: ${response.body}");
+
+  }
+  _patch() async{
+
+    Post post = Post(120, null, "Titulo", "Corpo da postagem");
+    var corpo = json.encode(
+        post.toJson()
+    );
+    http.Response response = await http.patch(
+        _urlBase+ "/posts/2",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8"
+        },
+        body: corpo
+    );
+
+    print("Resposta: ${response.statusCode}");
+    print("Resposta: ${response.body}");
+
+  }
+  _delete() async{
+    http.Response response = await http.delete(
+      _urlBase + "/posts/2"
+    );
+
+
+    print("Resposta: ${response.statusCode}");
+    print("Resposta: ${response.body}");
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map>(
-        future: _recuperarPreco(),
-        builder: (context, snapshot){
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Consumo de serviço avançado"),
+      ),
+      body: Container(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                TextButton(
+                  child: Text(
+                      "Salvar",
+                    style: TextStyle(
+                      color: Colors.white
+                    ),
+                  ),
+                    onPressed: _post,
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.green
+                  )
+                ),
+                TextButton(
+                    child: Text(
+                        "Atualizar",
+                      style: TextStyle(
+                          color: Colors.white
+                      ),
+                    ),
+                    onPressed: _patch,
+                    style: TextButton.styleFrom(
+                        backgroundColor: Colors.orange
+                    )
+                ),
+                TextButton(
+                    child: Text(
+                        "Remover",
+                      style: TextStyle(
+                          color: Colors.white
+                      ),
+                    ),
+                    onPressed: _delete,
+                    style: TextButton.styleFrom(
+                        backgroundColor: Colors.red
+                    )
+                ),
+              ],
+            ),
+            Expanded(
+                child: FutureBuilder<List<Post>>(
+                    future: _recuperarPostagens(),
+                    builder: (context, snapshot){
 
-          String resultado;
-          switch(snapshot.connectionState){
-            case ConnectionState.none:
-            case ConnectionState.waiting:
-              print("Conexão waiting");
-              resultado = "Carregando...";
-              break;
-            case ConnectionState.active:
-            case ConnectionState.done:
-              print("Conexão done");
-              if(snapshot.hasError){
-                resultado = "Erro ao carregar os dados.";
-              }else{
-                double valor = snapshot.data["BRL"]["buy"];
-                resultado = "Preço do Bitcoin: ${valor.toString()}";
-              }
-              break;
-          }
-          return Center(
-            child: Text(resultado),
-          );
-        }
+                      switch(snapshot.connectionState){
+                        case ConnectionState.none:
+                        case ConnectionState.waiting:
+                          return Center(child: CircularProgressIndicator());
+                          break;
+                        case ConnectionState.active:
+                        case ConnectionState.done:
+                          if(snapshot.hasError){
+                            print("Lista: Erro ao carregar");
+                          }else{
+                            return ListView.builder(
+                                itemCount: snapshot.data.length,
+                                itemBuilder: (context, index){
+                                  List<Post> lista = snapshot.data;
+                                  Post post = lista[index];
+
+                                  return ListTile(
+                                    title: Text(post.title),
+                                    subtitle: Text(post.id.toString()),
+                                  );
+                                }
+                            );
+                          }
+                          break;
+                      }
+                    }
+                ),
+            ),
+
+          ],
+        ),
+      ),
     );
   }
 }
