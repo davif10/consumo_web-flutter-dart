@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:youtube/Api.dart';
 import 'package:youtube/model/Video.dart';
+import 'package:flutter_youtube/flutter_youtube.dart';
 
 class Inicio extends StatefulWidget {
-  const Inicio({Key key}) : super(key: key);
+  String pesquisa;
+
+  Inicio(this.pesquisa);
 
   @override
   _InicioState createState() => _InicioState();
 }
 
 class _InicioState extends State<Inicio> {
-  _listarVideos(){
+  _listarVideos(String pesquisa){
     Api api = Api();
-    return api.pesquisar("");
+    return api.pesquisar(pesquisa);
   }
 
   @override
@@ -20,7 +23,7 @@ class _InicioState extends State<Inicio> {
 
 
     return FutureBuilder<List<Video>>(
-      future: _listarVideos(),
+      future: _listarVideos(widget.pesquisa),
       builder: (context, snapshot){
         switch(snapshot.connectionState){
           case ConnectionState.none:
@@ -36,35 +39,45 @@ class _InicioState extends State<Inicio> {
                   itemBuilder: (context, index){
                     List<Video> videos = snapshot.data;
                     Video video = videos[index];
-                    return Column(
-                      children: [
-                        Padding(padding: EdgeInsets.only(bottom: 16)),
-                        Container(
-                          height: 200,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              fit: BoxFit.cover,
-                              image: NetworkImage(video.imagem)
-                            )
-                          ),
-                        ),
-                        ListTile(
-                          title: Text(
-                              video.titulo,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16
+                    return GestureDetector(
+                      onTap: (){
+                        FlutterYoutube.playYoutubeVideoById(
+                            apiKey: CHAVE_YOUTUBE_API,
+                            videoId: video.id,
+                            autoPlay: true,
+                            fullScreen: true
+                        );
+                      },
+                      child: Column(
+                        children: [
+                          Padding(padding: EdgeInsets.only(bottom: 16)),
+                          Container(
+                            height: 200,
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                fit: BoxFit.cover,
+                                image: NetworkImage(video.imagem)
+                              )
                             ),
                           ),
-                          subtitle: Text(
-                              video.canal,
-                            style: TextStyle(
-                              //color: Colors.red,
-                              fontWeight: FontWeight.bold
+                          ListTile(
+                            title: Text(
+                                video.titulo,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16
+                              ),
                             ),
-                          ),
-                        )
-                      ],
+                            subtitle: Text(
+                                video.canal,
+                              style: TextStyle(
+                                //color: Colors.red,
+                                fontWeight: FontWeight.bold
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
                     );
                   },
                   separatorBuilder: (context, index) => Divider(
